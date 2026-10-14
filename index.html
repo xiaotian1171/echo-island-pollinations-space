@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#182739">
+  <meta name="description" content="A tiny voice-character studio: invent someone, hear them tell a story, bring your own Pollen.">
+  <title>Echo Island — a voice, a world, a moment</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header><a class="logo" href="./"><span class="logo-icon">◌</span><span>ECHO<br><b>ISLAND</b></span></a><div class="head-right"><span class="studio-tag"><i></i> A TINY VOICE STUDIO</span><a class="header-badge" href="https://pollinations.ai/?ref=badge" target="_blank" rel="noopener noreferrer" aria-label="Made with Pollinations.ai"><img src="https://raw.githubusercontent.com/pollinations/pollinations/main/packages/ui/src/brand/badge-made-with.svg" alt="Made with pollinations.ai"></a><button id="connect" type="button">CONNECT POLLEN <span>↗</span></button></div></header>
+  <main>
+    <div class="intro"><div class="eyebrow"><span>✳</span> STORYTELLING, WITH A PULSE</div><h1>Give an idea<br><em>its own voice.</em></h1><p>Describe a character in a few words. Pollinations invents a scene, paints their portrait and lets you hear the moment they come alive.</p></div>
+    <div id="iframeNotice" class="iframe-notice" hidden><span>↗</span><div><strong>Listening inside an embed?</strong><p>Open this Space in its own tab before connecting your Pollen, so sign-in can return here safely.</p></div><a id="openTab" href="./" target="_blank" rel="noopener">OPEN THE STUDIO</a></div>
+    <div class="workspace">
+      <section class="form-panel"><div class="panel-top"><span>01 / SET THE SCENE</span><span class="small-sun">✺</span></div><h2>Who is speaking?</h2><p class="hint">The specific details are what make their voice feel real.</p><form id="createForm"><label for="character">YOUR CHARACTER</label><textarea id="character" rows="4" maxlength="350" required placeholder="A lighthouse keeper who secretly writes postcards to the stars..."></textarea><div class="count"><span>ONE SMALL IDEA IS ENOUGH</span><span id="counter">0 / 350</span></div><label for="mood">THE MOOD</label><div class="select-wrap"><select id="mood"><option value="warm and wistful">Warm & wistful</option><option value="playful and curious">Playful & curious</option><option value="mysterious and cinematic">Mysterious & cinematic</option><option value="soft and hopeful">Soft & hopeful</option></select><span>⌄</span></div><label for="voice">THE VOICE</label><div class="select-wrap"><select id="voice"><option value="nova">Nova — bright</option><option value="alloy">Alloy — gentle</option><option value="onyx">Onyx — deep</option><option value="shimmer">Shimmer — airy</option></select><span>⌄</span></div><button id="create" class="make" type="submit"><span>MAKE A MOMENT</span><span>↗</span></button></form><p class="fineprint">◈ You bring your own Pollen. No keys are bundled with a Space or sent to its server.</p><p id="status" role="status" aria-live="polite"></p></section>
+      <section class="result-panel" aria-label="Character portrait and spoken story"><div class="scene-top"><span><i></i> THE LISTENING ROOM</span><span id="sceneNo">TAKE 001</span></div><div class="stage"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="light-fall"></div><div id="portrait" class="portrait"><div class="portrait-art"><span>✧</span><div class="face">◡</div></div></div><div class="starfield" aria-hidden="true">✧&nbsp;&nbsp;&nbsp;✳&nbsp;&nbsp;&nbsp;✦</div></div><div class="story"><div class="story-heading"><span id="characterTag">A CHARACTER IS WAITING</span><span class="story-indicator">● LIVE STORY</span></div><h2 id="characterName">Someone wonderful.</h2><p id="storyLine">A voice is a little world of its own. Give us a spark, and we'll make a moment you can hear.</p><div class="player" id="player"><button id="play" type="button" aria-label="Play or pause scene" disabled>▶</button><div class="sound"><span class="sound-caption">VOICE NOTE <span id="duration">00:00</span></span><div class="progress"><span id="progress"></span></div></div><div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><audio id="audio"><track id="captions" kind="captions" srclang="en" label="English captions"></audio></div></section>
+    </div>
+    <div class="bottom-bar"><span>HOW IT WORKS</span><div><b>01</b> YOU IMAGINE A PERSON</div><div><b>02</b> AI FINDS THEIR STORY</div><div><b>03</b> YOU HEAR THEIR WORLD</div></div>
+  </main>
+  <footer><div>AN OPEN, DUPLICATE-FRIENDLY SPACE <span>✳</span> MADE FOR CURIOUS PEOPLE</div><a href="https://pollinations.ai/?ref=badge" target="_blank" rel="noopener"><img src="https://raw.githubusercontent.com/pollinations/pollinations/main/packages/ui/src/brand/badge-made-with.svg" alt="Made with pollinations.ai"></a></footer>
+</body>
+</html>

@@ -10,6 +10,8 @@ pinned: false
 
 # Echo Island · a duplicate-friendly Pollinations Space
 
+**Live Space:** https://huggingface.co/spaces/xiaotian1171/echo-island-pollinations-space
+
 One tiny character idea becomes an original scene, an illustrated portrait, and a spoken voice note with synchronized word highlighting. A static Space visitors can duplicate and personalize without maintaining a server, a shared billing key, or any build pipeline.
 
 [![Made with pollinations.ai](https://raw.githubusercontent.com/pollinations/pollinations/main/packages/ui/src/brand/badge-made-with.svg)](https://pollinations.ai/?ref=badge)

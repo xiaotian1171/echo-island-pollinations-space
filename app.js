@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const BASE = "https://gen.pollinations.ai";
 const STORAGE = "echo-island-pollen";
 const STATE = "echo-island-auth-state";
+const PENDING = "echo-island-pending-auth";
 // An embedded Space can have third-party storage blocked; top-level mode still works.
 const store = {
 	get: (key) => {
@@ -52,13 +53,38 @@ function connected() {
 function cleanUrl() {
 	history.replaceState(null, "", location.pathname + location.search);
 }
+function rememberState(state) {
+	const inTab = store.set(STATE, state);
+	try {
+		// Only the nonce is shared across tabs; the returned grant stays in sessionStorage.
+		localStorage.setItem(
+			PENDING,
+			JSON.stringify({ state, until: Date.now() + 30 * 60_000 }),
+		);
+		return true;
+	} catch {
+		return inTab;
+	}
+}
+function consumeState(returned) {
+	const inTab = store.get(STATE);
+	store.remove(STATE);
+	let acrossTabs = null;
+	try {
+		const pending = JSON.parse(localStorage.getItem(PENDING) || "null");
+		localStorage.removeItem(PENDING);
+		if (pending?.until > Date.now()) acrossTabs = pending.state;
+	} catch {
+		/* Storage can be disabled in embedded/private browsers. */
+	}
+	return !!returned && (returned === inTab || returned === acrossTabs);
+}
 function receiveAuth() {
 	const params = new URLSearchParams(location.hash.slice(1));
 	if (!params.has("api_key") && !params.has("error")) return;
 	cleanUrl();
-	const expected = store.get(STATE);
-	store.remove(STATE);
-	if (expected && params.get("state") === expected && params.get("api_key")) {
+	const validState = consumeState(params.get("state"));
+	if (validState && params.get("api_key")) {
 		token = params.get("api_key");
 		store.set(STORAGE, token);
 		status("Connected. Your story can begin.");
@@ -83,7 +109,13 @@ function login() {
 		return;
 	}
 	const state = crypto.randomUUID();
-	store.set(STATE, state);
+	if (!rememberState(state)) {
+		status(
+			"This browser blocks sign-in storage. Open the studio in a regular tab.",
+			true,
+		);
+		return;
+	}
 	store.set("echo-island-draft", $("character").value);
 	const url = new URL("https://enter.pollinations.ai/authorize");
 	url.search = new URLSearchParams({

@@ -34,6 +34,7 @@ let token = store.get(STORAGE) || "";
 let audioUrl = "";
 let captionsUrl = "";
 let imageUrl = "";
+let browserSpeech = "";
 let busy = false;
 let words = [];
 
@@ -179,45 +180,101 @@ async function textScene(idea, mood) {
 	);
 }
 
-async function speechFor(scene) {
-	const response = await fetch(`${BASE}/v1/audio/speech/with-timestamps`, {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${token}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			model: MODELS.voice,
-			input: scene.script,
-			voice: $("voice").value,
-			response_format: "mp3",
-		}),
-	});
-	if (!response.ok)
-		throw new Error(`Voice unavailable (HTTP ${response.status}).`);
-	const data = await response.json();
-	const bytes = Uint8Array.from(atob(data.audio_base64), (c) =>
-		c.charCodeAt(0),
-	);
+function attachAudio(blob, script, durationHint = 30, alignment = null) {
+	browserSpeech = "";
+	window.speechSynthesis?.cancel?.();
 	if (audioUrl) URL.revokeObjectURL(audioUrl);
 	if (captionsUrl) URL.revokeObjectURL(captionsUrl);
-	const alignment = data.normalized_alignment || data.alignment;
-	const end = Math.max(
-		1,
-		Math.ceil((alignment?.character_end_times_seconds?.at(-1) || 30) + 0.5),
-	);
+	const end = Math.max(1, Math.ceil(durationHint + 0.5));
 	const stamp = new Date(end * 1000).toISOString().slice(11, 23);
-	const caption = scene.script.replace(/\s+/g, " ").replace(/-->/g, "→");
+	const caption = script.replace(/\s+/g, " ").replace(/-->/g, "→");
 	captionsUrl = URL.createObjectURL(
 		new Blob([`WEBVTT\n\n00:00:00.000 --> ${stamp}\n${caption}\n`], {
 			type: "text/vtt",
 		}),
 	);
 	$("captions").src = captionsUrl;
-	audioUrl = URL.createObjectURL(new Blob([bytes], { type: "audio/mpeg" }));
+	audioUrl = URL.createObjectURL(blob);
 	$("audio").src = audioUrl;
 	$("play").disabled = false;
-	showAlignedWords(alignment, scene.script);
+	showAlignedWords(alignment, script);
+}
+
+async function speechFor(scene) {
+	const payload = {
+		input: scene.script,
+		voice: $("voice").value,
+		response_format: "mp3",
+	};
+	try {
+		const response = await fetch(`${BASE}/v1/audio/speech/with-timestamps`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${token}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				...payload,
+				model: MODELS.voice,
+			}),
+		});
+		if (response.ok) {
+			const data = await response.json();
+			const bytes = Uint8Array.from(atob(data.audio_base64), (c) =>
+				c.charCodeAt(0),
+			);
+			const alignment = data.normalized_alignment || data.alignment;
+			const end = alignment?.character_end_times_seconds?.at(-1) || 30;
+			attachAudio(
+				new Blob([bytes], { type: "audio/mpeg" }),
+				scene.script,
+				end,
+				alignment,
+			);
+			return "timed";
+		}
+	} catch {
+		/* Fall back to the free TTS model when timestamped speech is unavailable. */
+	}
+
+	try {
+		const fallback = await fetch(`${BASE}/v1/audio/speech`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${token}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				...payload,
+				model: MODELS.fallbackVoice || "openai/tts-1",
+			}),
+		});
+		if (fallback.ok) {
+			const blob = await fallback.blob();
+			attachAudio(
+				new Blob([blob], { type: "audio/mpeg" }),
+				scene.script,
+				45,
+				null,
+			);
+			return "fallback";
+		}
+		if (!("speechSynthesis" in window))
+			throw new Error(`Voice unavailable (HTTP ${fallback.status}).`);
+	} catch (error) {
+		if (!("speechSynthesis" in window)) throw error;
+	}
+
+	if (audioUrl) URL.revokeObjectURL(audioUrl);
+	if (captionsUrl) URL.revokeObjectURL(captionsUrl);
+	audioUrl = "";
+	captionsUrl = "";
+	browserSpeech = scene.script;
+	$("audio").removeAttribute("src");
+	$("duration").textContent = "LIVE";
+	$("play").disabled = false;
+	showAlignedWords(null, scene.script);
+	return "browser";
 }
 
 function showAlignedWords(alignment, fallback) {
@@ -312,6 +369,8 @@ async function create() {
 	busy = true;
 	$("create").disabled = true;
 	$("play").disabled = true;
+	browserSpeech = "";
+	window.speechSynthesis?.cancel?.();
 	$("audio").pause();
 	status("Meeting your character…");
 	try {
@@ -353,6 +412,29 @@ $("createForm").addEventListener("submit", (event) => {
 });
 $("character").addEventListener("input", updateCount);
 $("play").addEventListener("click", async () => {
+	if (browserSpeech && "speechSynthesis" in window) {
+		if (window.speechSynthesis.speaking) {
+			window.speechSynthesis.cancel();
+			$("play").textContent = "▶";
+			$("player").classList.remove("playing");
+		} else {
+			const utterance = new SpeechSynthesisUtterance(browserSpeech);
+			utterance.onend = () => {
+				$("play").textContent = "▶";
+				$("player").classList.remove("playing");
+				$("progress").style.width = "100%";
+			};
+			utterance.onerror = () => {
+				$("play").textContent = "▶";
+				$("player").classList.remove("playing");
+			};
+			$("progress").style.width = "0%";
+			$("play").textContent = "Ⅱ";
+			$("player").classList.add("playing");
+			window.speechSynthesis.speak(utterance);
+		}
+		return;
+	}
 	if ($("audio").paused) {
 		try {
 			await $("audio").play();

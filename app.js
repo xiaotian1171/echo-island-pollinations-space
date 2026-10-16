@@ -234,7 +234,7 @@ async function speechFor(scene) {
 			return "timed";
 		}
 	} catch {
-		/* Fall back to the free TTS model when timestamped speech is unavailable. */
+		/* Fall back to the Quest-Pollen eligible TTS model when timestamped speech is unavailable. */
 	}
 
 	try {
